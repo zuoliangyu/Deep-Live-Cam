@@ -245,6 +245,32 @@ def create_root(start: Callable[[], None], destroy: Callable[[], None]) -> ctk.C
     )
     enhancer_switch.place(relx=0.1, rely=0.6)
 
+    gpen256_value = ctk.BooleanVar(value=modules.globals.fp_ui.get("face_enhancer_gpen256", False))
+    gpen256_switch = ctk.CTkSwitch(
+        root,
+        text=_("GPEN Enhancer 256"),
+        variable=gpen256_value,
+        cursor="hand2",
+        command=lambda: (
+            update_tumbler("face_enhancer_gpen256", gpen256_value.get()),
+            save_switch_states(),
+        ),
+    )
+    gpen256_switch.place(relx=0.1, rely=0.65)
+
+    gpen512_value = ctk.BooleanVar(value=modules.globals.fp_ui.get("face_enhancer_gpen512", False))
+    gpen512_switch = ctk.CTkSwitch(
+        root,
+        text=_("GPEN Enhancer 512"),
+        variable=gpen512_value,
+        cursor="hand2",
+        command=lambda: (
+            update_tumbler("face_enhancer_gpen512", gpen512_value.get()),
+            save_switch_states(),
+        ),
+    )
+    gpen512_switch.place(relx=0.1, rely=0.7)
+
     keep_audio_value = ctk.BooleanVar(value=modules.globals.keep_audio)
     keep_audio_switch = ctk.CTkSwitch(
         root,
@@ -300,7 +326,7 @@ def create_root(start: Callable[[], None], destroy: Callable[[], None]) -> ctk.C
             close_mapper_window() if not map_faces.get() else None
         ),
     )
-    map_faces_switch.place(relx=0.1, rely=0.65)
+    map_faces_switch.place(relx=0.1, rely=0.75)
 
     poisson_blend_value = ctk.BooleanVar(value=modules.globals.poisson_blend)
     poisson_blend_switch = ctk.CTkSwitch(
@@ -313,7 +339,7 @@ def create_root(start: Callable[[], None], destroy: Callable[[], None]) -> ctk.C
             save_switch_states(),
         ),
     )
-    poisson_blend_switch.place(relx=0.1, rely=0.7)
+    poisson_blend_switch.place(relx=0.1, rely=0.8)
 
     show_fps_value = ctk.BooleanVar(value=modules.globals.show_fps)
     show_fps_switch = ctk.CTkSwitch(
@@ -1069,6 +1095,12 @@ def _processing_thread_func(capture_queue, processed_queue, stop_event,
                 if frame_processor.NAME == "DLC.FACE-ENHANCER":
                     if modules.globals.fp_ui["face_enhancer"]:
                         temp_frame = frame_processor.process_frame(None, temp_frame)
+                elif frame_processor.NAME == "DLC.FACE-ENHANCER-GPEN256":
+                    if modules.globals.fp_ui.get("face_enhancer_gpen256", False):
+                        temp_frame = frame_processor.process_frame(None, temp_frame)
+                elif frame_processor.NAME == "DLC.FACE-ENHANCER-GPEN512":
+                    if modules.globals.fp_ui.get("face_enhancer_gpen512", False):
+                        temp_frame = frame_processor.process_frame(None, temp_frame)
                 elif frame_processor.NAME == "DLC.FACE-SWAPPER":
                     # Use cached face positions from detection thread
                     swapped_bboxes = []
@@ -1092,6 +1124,10 @@ def _processing_thread_func(capture_queue, processed_queue, stop_event,
             for frame_processor in frame_processors:
                 if frame_processor.NAME == "DLC.FACE-ENHANCER":
                     if modules.globals.fp_ui["face_enhancer"]:
+                        temp_frame = frame_processor.process_frame_v2(temp_frame)
+                elif frame_processor.NAME in ("DLC.FACE-ENHANCER-GPEN256", "DLC.FACE-ENHANCER-GPEN512"):
+                    fp_key = frame_processor.NAME.split(".")[-1].lower().replace("-", "_")
+                    if modules.globals.fp_ui.get(fp_key, False):
                         temp_frame = frame_processor.process_frame_v2(temp_frame)
                 else:
                     temp_frame = frame_processor.process_frame_v2(temp_frame)
